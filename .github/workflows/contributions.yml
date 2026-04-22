@@ -1,0 +1,35 @@
+name: GitHub Contributions to Slack
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get contributions and notify Slack
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          FROM="$(date +'%Y-%m-01')"
+          TO="$(date +'%Y-%m-%d')"
+          YEAR="$(date +'%Y')"
+
+          COUNT=$(curl -s -X POST "https://api.github.com/graphql" \
+            -H "Authorization: bearer $GH_PAT" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"{ user(login: \\\"Castellon-ACM\\\") { contributionsCollection(from: \\\"${FROM}T00:00:00Z\\\", to: \\\"${TO}T23:59:59Z\\\") { contributionCalendar { totalContributions } } } }\"}" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['user']['contributionsCollection']['contributionCalendar']['totalContributions'])")
+
+          if [ -z "$COUNT" ]; then
+            MESSAGE="No se pudo obtener el conteo de contribuciones"
+          else
+            MESSAGE="${COUNT} contributions in ${YEAR}"
+          fi
+
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"${MESSAGE}\"}"
