@@ -14,7 +14,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
-          FROM="$(date +'%Y-%m-01')"
+          FROM="$(date +'%Y-01-01')"
           TO="$(date +'%Y-%m-%d')"
           YEAR="$(date +'%Y')"
 
